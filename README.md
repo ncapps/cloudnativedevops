@@ -436,6 +436,13 @@ spec:
 - LimitRanges specify default resource requests and limits for containers in a namespace.
 - Set resource limits so that your applications almost, but don’t quite exceed them in normal usage.
 
+### Chapter 6. Operating Clusters
+- Kubernetes clusters need at least three master nodes in order to be highly available, and you may need more to handle the work of larger clusters. Two worker nodes is the minimum required to make your workloads fault-tolerant to the failure of a single node, and three worker nodes is even better.
+- For maximum reliability, keep your Kubernetes clusters smaller than 5,000 nodes and 150,000 Pods (this isn’t an issue for most users). If you need more resources, run multiple clusters.
+- If you need to replicate workloads across multiple clusters, perhaps for geographical redundancy or latency reasons, use federation. Most users don’t need to federate their clusters, though.
+- Use a single production and a single staging cluster, unless you really need complete isolation of one set of workloads or teams from another. If you just want to partition your cluster for ease of management, use namespaces instead.
+- Use the most cost-effective node type that your provider offers. Often, larger nodes work out cheaper, but if you only have a handful of nodes, you might want to add some smaller ones, to help with redundancy.
+- Don’t just shut down nodes when you don’t need them anymore. Drain them first to ensure their workloads are migrated to other nodes, and to make sure you have enough spare capacity remaining in the cluster.
 
 
 
