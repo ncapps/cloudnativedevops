@@ -172,3 +172,43 @@ k get pods --selector app=demo
 - The `kubectl` tool is the primary way of interacting with a Kubernetes cluster.
 - It can be used either imperatively (to run a public container image, for example, and implicitly creating the necessary Kubernetes resources).
 - It can be used declaratively, to apply Kubernetes configuration in the form of YAML manifests.
+
+### 3. Getting Kubernetes
+**Cluster Architecture**
+- *The Control Plane*: Runs all the tasks required for Kubernetes to do its job: scheduling containers, managing Services, serving API requests, etc. The members of the cluster which run the control plane components are called *master nodes*.
+- *Worker nodes*: Cluster member that run user workloads
+
+**Control Plane Components**
+- *kube-apiserver*: This is the frontend server for the control plane, handling API requests.
+- *etcd*: This is the database where Kubernetes stores all its information: what nodes exist, what resources exist on the cluster, and so on.
+- *kube-scheduler*: This decides where to run newly created Pods.
+- *kube-controller-manager*: This is responsible for running resource controllers, such as Deployments.
+- **cloud-controller-manager*: This interacts with the cloud provider (in cloud-based clusters), managing resources such as load balancers and disk volumes.
+
+**Node Components**
+- *kubelet*: This is responsible for driving the container runtime to start workloads that are scheduled on the node, and monitoring their status.
+- *kube-proxy*: This does the networking magic that routes requests between Pods on different nodes, and between Pods and the internet.
+- *Container runtime*: This actually starts and stops containers and handles their communications. Usually Docker, but Kubernetes supports other container runtimes, such as rkt and CRI-O.
+
+
+**Kubernetes Installers**
+- *Rancher Kubernetes Engine (RKE)* aims to be a simple, fast Kubernetes installer. It doesn’t provision the nodes for you, and you have to install Docker on the nodes yourself before you can use RKE to install the cluster. RKE supports high availability of the Kubernetes control plane.
+For learning: https://github.com/kelseyhightower/kubernetes-the-hard-way
+
+**Run Less Software**
+There are three pillars of the Run Less Software philosophy, all of which will help you manipulate time and defeat your enemies.
+
+1. Choose standard technology
+2. Outsource undifferentiated heavy lifting
+3. Create enduring competitive advantage
+
+**Summary**
+- It’s not worth managing Kubernetes clusters yourself if a service provider can do it better and cheaper.
+- You should use managed Kubernetes if you can. This is the best option for most businesses in terms of cost, overhead, and quality.
+- Don’t self-host your cluster without sound business reasons. If you do self-host, don’t underestimate the engineering time involved for the initial setup and ongoing maintenance overhead.
+
+Implementation questions:
+- Managing the `etcd` database of the Kubernetes control plane. What happens on reboot, interruption, etc.
+- See "Self-hosted option" in Ch 3 of Cloud Native DevOps with Kubernetes
+- Why not use managed kubernetes (EKS, Fargate) for the manager on the ground?
+-
