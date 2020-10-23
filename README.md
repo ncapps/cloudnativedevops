@@ -115,7 +115,7 @@ Again, using `kubectl apply -f...` and keeping your manifests tracked in source 
 Depending on which version of the book you read you may see reference to using port `9999` for the service port [here](https://github.com/cloudnativedevops/demo/blob/master/hello-k8s/k8s/service.yaml). This caused some confusion between the pod port, service port, and the port-forwarding port in the examples, so was changed in the latest revision to use `8888` for both the pod and the serivce. Thanks to @randoljt for catching this and sorry for any confusion.
 
 ## Notes from the book
-### 1. Revolution in the Cloud
+### Chapter 1. Revolution in the Cloud
 **Cloud Native characteristics**
 - *Automatable*: If applications are to be deployed and managed by machines, instead of humans, they need to abide by common standards, formats, and interfaces. Kubernetes provides these standard interfaces in a way that means application developers don’t even need to worry about them.
 
@@ -136,7 +136,7 @@ Depending on which version of the book you read you may see reference to using p
 - **Kubernetes** is the de facto standard container orchestration system
 - *Cloud native* is a useful shorthand for talking about cloud-based, containerized, distributed systems, made up of cooperating microservices, dynamically managed by automated infrastructure as code.
 
-### 2. First Steps with Kubernetes
+### Chapter 2. First Steps with Kubernetes
 **Docker basics**
 ```bash
 cd hello/
@@ -173,7 +173,7 @@ k get pods --selector app=demo
 - It can be used either imperatively (to run a public container image, for example, and implicitly creating the necessary Kubernetes resources).
 - It can be used declaratively, to apply Kubernetes configuration in the form of YAML manifests.
 
-### 3. Getting Kubernetes
+### Chapter 3. Getting Kubernetes
 **Cluster Architecture**
 - *The Control Plane*: Runs all the tasks required for Kubernetes to do its job: scheduling containers, managing Services, serving API requests, etc. The members of the cluster which run the control plane components are called *master nodes*.
 - *Worker nodes*: Cluster member that run user workloads
@@ -207,7 +207,7 @@ There are three pillars of the Run Less Software philosophy, all of which will h
 - You should use managed Kubernetes if you can. This is the best option for most businesses in terms of cost, overhead, and quality.
 - Don’t self-host your cluster without sound business reasons. If you do self-host, don’t underestimate the engineering time involved for the initial setup and ongoing maintenance overhead.
 
-### Ch 4. Working with Kubernetes Objects
+### Chapter 4. Working with Kubernetes Objects
 **Deployments**
 - A Deployment’s job is to watch its associated containers and make sure that the specified number of them is always running.
 ```
@@ -310,9 +310,138 @@ helm uninstall demo
 - `kubectl` is the main tool for interacting with Kubernetes, allowing you to apply manifests, query resources, make changes, delete resources, and do many other tasks.
 - Helm is a Kubernetes package manager. It simplifies configuring and deploying Kubernetes applications, allowing you to use a single set of values (such as the application name or listen port) and a set of templates to generate Kubernetes YAML files, instead of having to maintain the raw YAML files yourself.
 
+### Chapter 5. Managing Resources
+**Understanding Resources**
+Always specify resource requests and limits for your containers. This helps Kubernetes schedule and manage your Pods properly.
+
+- In order to schedule Pods effectively, the scheduler has to know the minimum and maximum allowable resource requirements for each Pod.
+- Kubernetes understands how to manage two kinds of resources: CPU and memory.
+- Kubernetes *resource request* specifies the minimum amount of that resource that the Pod needs to run
+- A *resource limit* specifies the maximum amount of resource that a Pod is allowed to use.
+- A Pod that tries to use more than its allocated CPU limit will be *throttled*, reducing its performance.
+- A Pod that tries to use more than the allowed memory limit, though, will be terminated. If the terminated Pod can be rescheduled, it will be. In practice, this may mean that the Pod is simply restarted on the same node.
+- Kubernetes allows resources to be *overcommitted*; that is, the sum of all the resource limits of containers on a node can exceed the total resources of that node. This is a kind of gamble: the scheduler is betting that, most of the time, most containers will not need to hit their resource limits.
+Example resource requests
+```yaml
+spec:
+  containers:
+  - name: demo
+    image: cloudnatived/demo:hello
+    ports:
+    - containerPort: 8888
+    resources:
+      requests:
+        memory: "10Mi"
+        cpu: "100m"
+```
+
+Example resource limits
+```yaml
+spec:
+  containers:
+  - name: demo
+    image: cloudnatived/demo:hello
+    ports:
+    - containerPort: 8888
+    resources:
+      limits:
+        memory: "20Mi"
+        cpu: "250m"
+```
+
+**Managing the Container Life Cycle**
+Use readiness probes and liveness probes to let Kubernetes know when your application is ready to handle requests, or when it has a problem and needs to be restarted.
+
+- Kubernetes lets you specify a *liveness* probe as part of the container spec: a health check that determines whether or not the container is alive (that is, working).
+- The `initialDelaySeconds` field lets you tell Kubernetes how long to wait before trying the first liveness probe, avoiding this loop of death situation.
+- The `periodSeconds` field specifies how often the liveness probe should be checked
+- The `exec` probe runs the specified command inside the container, and the probe succeeds if the command succeeds (that is, exits with a zero status). `exec` is usually more useful as a readiness probe.
+- The exec probe runs the specified command inside the container, and the probe succeeds if the command succeeds (that is, exits with a zero status). exec is usually more useful as a readiness probe
+- Readiness probes should only return HTTP 200 OK status
+- A container or Pod will not be considered ready until its readiness probe has been up for `minReadySeconds` (default 0).
+- Set PodDisruptionBudgets for your business-critical applications to make sure there are always enough replicas to maintain the service, even when Pods are evicted.
+- Create separate namespaces for each of your applications or each logical component of your infrastructure. Don’t use the default namespace: it’s too easy to make mistakes.
+
+Example liveness probe
+```yaml
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8888
+  initialDelaySeconds: 3
+  periodSeconds: 3
+```
+
+Example readiness probe
+```yaml
+readinessProbe:
+  httpGet:
+    path: /healthz
+    port: 8888
+  initialDelaySeconds: 3
+  periodSeconds: 3
+```
+
+**Using Namespaces**
+A Kubernetes namespace is a way of partitioning your cluster into separate subdivisions, for whatever purpose you like.
+
+- Every Kubernetes Service has an associated DNS name that you can use to talk to it
+- Service DNS names always follow this pattern: `SERVICE.NAMESPACE.svc.cluster.local`
+- Use `ResourceQuotas` in each namespace to enforce a limit on the number of Pods that can run in the namespace.
+- You can set default requests and limits for all containers in a namespace using a `LimitRange` resource.
+- Use LimitRanges in each namespace to set default resource requests and limits for containers, but don’t rely on them; treat them as a backstop. Always specify explicit requests and limits in the container spec itself.
+
+Example namespace
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo
+```
+
+Example LimitRange
+```yaml
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: demo-limitrange
+spec:
+  limits:
+  - default:
+      cpu: "500m"
+      memory: "256Mi"
+    defaultRequest:
+      cpu: "200m"
+      memory: "128Mi"
+    type: Container
+```
+
+**Optimizing Cluster Costs**
+- Use the minimum number of Pods for a given Deployment that will satisfy your performance and availability requirements. Gradually reduce the number of replicas to just above the point where your service level objectives are met.
+- There is a Kubernetes add-on called the Vertical Pod Autoscaler, which can help you work out the ideal values for resource requests.
+- A good rule of thumb is that nodes should be big enough to run at least five of your typical Pods, keeping the proportion of stranded resources to around 10% or less. If the node can run 10 or more Pods, stranded resources will be below 5%.
+- Larger nodes tend to be more cost-effective, because less of their resources are consumed by system overhead. Size your nodes by looking at real-world utilization figures for your cluster, aiming for between 10 and 100 Pods per node.
+- Don’t use instance types with more storage than you need. Provision the smallest, lowest-IOPS disk volumes you can, based on the throughput and space that you actually use.
+- Don’t use instance types with more storage than you need. Provision the smallest, lowest-IOPS disk volumes you can, based on the throughput and space that you actually use.
+
+**Summary**
+- Kubernetes allocates CPU and memory resources to containers on the basis of *requests* and *limits*
+- A container’s requests are the minimum amounts of resources it needs to run. Its limits specify the maximum amount it’s allowed to use.
+- Liveness probes tell Kubernetes whether the container is working properly. If a container’s liveness probe fails, it will be killed and restarted.
+- Readiness probes tell Kubernetes that the container is ready and able to serve requests. If the readiness probe fails, the container will be removed from any Services that reference it, disconnecting it from user traffic.
+- PodDisruptionBudgets let you limit the number of Pods that can be stopped at once during evictions, preserving high availability for your application.
+- Namespaces are a way of logically partitioning your cluster. You might create a namespace for each application, or group of related applications.
+- To refer to a Service in another namespace, you can use a DNS address like this: SERVICE.NAMESPACE.
+- ResourceQuotas let you set overall resource limits for a given namespace.
+- LimitRanges specify default resource requests and limits for containers in a namespace.
+- Set resource limits so that your applications almost, but don’t quite exceed them in normal usage.
+
+
+
 
 Implementation questions:
 - Managing the `etcd` database of the Kubernetes control plane. What happens on reboot, interruption, etc.
 - See "Self-hosted option" in Ch 3 of Cloud Native DevOps with Kubernetes
 - Why not use managed kubernetes (EKS, Fargate) for the manager on the ground?
+- How will we instruct kubernetes to clean up docker images?
 
