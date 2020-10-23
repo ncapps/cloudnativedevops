@@ -443,6 +443,129 @@ spec:
 - Use a single production and a single staging cluster, unless you really need complete isolation of one set of workloads or teams from another. If you just want to partition your cluster for ease of management, use namespaces instead.
 - Use the most cost-effective node type that your provider offers. Often, larger nodes work out cheaper, but if you only have a handful of nodes, you might want to add some smaller ones, to help with redundancy.
 - Don’t just shut down nodes when you don’t need them anymore. Drain them first to ensure their workloads are migrated to other nodes, and to make sure you have enough spare capacity remaining in the cluster.
+- Don’t enable cluster autoscaling just because it’s there. You probably won’t need it unless your workloads or demand are extremely variable. Scale your cluster manually instead, at least until you’ve been running it for a while and have a sense of how your scale requirements are changing over time.
+
+### Chapter 7. Kubernetes Power Tools
+**Mastering kubectl**
+- Use shell aliases
+- Use short flags
+- Abbreviating resource types
+```bash
+# Pod
+k get po
+# Deployment
+k get deploy
+# Service
+k get svc
+# Namespace
+k get ns
+
+# Get help on Kubernetes resources
+k explain pods
+k explain deploy.spec.template.spec.containers.livenessProbe.exec
+
+# Showing more detailed output
+k get pods -o wide
+
+# Get output in JSON
+k get pods -o json
+
+# Query and filter kubectl ouput with jq
+k get pods -o json | jq '.items[].metadata.name'
+
+# jq is powerful
+k get pods -o json --all-namespaces | jq '.items |
+  group_by(.spec.nodeName) | map({"nodeName": .[0].spec.nodeName,
+  "count": length}) | sort_by(.count) | reverse'
+
+# Watch objects
+k get pods --watch
+
+# Get detailed information about objects
+k describe pods <NAME>
+```
+
+**Imperative kubectl Commands**
+```bash
+# Create an object
+k create <OBJECT_TYPE> <NAME>
+
+# Delete an object
+k delete <OBJECT_TPYE> <NAME>
+
+# Edit an object
+k edit <OBJECT_TYPE> <NAME>
+```
+
+- Don’t use `kubectl` imperative commands such as create or edit on production clusters. Instead, always manage resources with version-controlled YAML manifests, applied with `kubectl apply` (or Helm charts).
+- Use `kubectl diff` to check what would change before applying any updates to your production cluster.
+
+**Generating Resource Manifests**
+```bash
+# Generate a YAML manifest for you
+k create deployment  demo --image=cloudnatived/demo:hello
+--dry-run=client -o yaml
+
+# Export all resources to a manifest file
+k get deployments newdemo -o yaml >deployment.yaml
+
+# Diffing resources
+k diff -f deployment.yaml
+```
+
+**Working with Containers**
+In Kubernetes, logs are considered to be whatever a container writes to the standard output and standard error streams; if you were running the program in a terminal, these are what you would see printed in the terminal.
+
+- *kubespy* can watch an individual resource in the cluster and show you what’s happening to it over time.
+
+```bash
+# Get most recent log lines
+kubectl logs -n kube-system --tail=20 kube-dns-autoscaler-69c5cbdcdd-94h7f
+
+# Watch logs
+kubectl logs --namespace kube-system --tail=10 --follow etcd-docker-for-desktop
+
+# Specifiy a specific container in a pod
+kubectl logs -n kube-system metrics-server -c metrics-server-nanny
+
+# Attach to a container
+kubectl attach demo-54f4458547-fcx2n
+
+# Execute a command in a container
+kubectl exec -it -c container2 POD_NAME /bin/sh
+
+# Get an interactive shell in your cluster
+kubectl run busybox --image=busybox:1.28 --rm -it --restart=Never /bin/sh
+```
+
+**Contexts and Namespaces**
+A context is a combination of a cluster, a user, and a namespace
+
+```bash
+# Get contexts
+k config get-contexts
+
+# Get cluster info
+k cluster-info
+
+# Switch to another context
+k config set-context myapp --cluster=gke --namespace=myapp
+
+# Check current context
+k config current-context
+```
+
+**Summary**
+- `kubectl` includes complete and exhaustive documentation on itself, available with `kubectl -h`, and on every Kubernetes resource, field, or feature, using `kubectl explain`.
+- When you want to do complicated filtering and transformations on `kubectl` output, for example in scripts, select JSON format with -`o json`. Once you have JSON data, you can use power tools like `jq` to query it.
+- The `--dry-run=client` option to kubectl, combined with `-o` YAML to get YAML output, lets you use imperative commands to generate Kubernetes manifests. This is a big time-saver when creating manifest files for new applications, for example.
+- You can turn existing resources into YAML manifests, too, using the `-o` flag to `kubectl get`.
+- `kubectl diff` will tell you what would change if you applied a manifest, without actually changing it.
+- You can see the output and error messages from any container with `kubectl logs`, stream them continuously with the `--follow` flag, or do more sophisticated multi-Pod log tailing with Stern.
+- To troubleshoot problem containers, you can attach to them with `kubectl attach` or get a shell on the container with `kubectl exec -it ... /bin/sh`
+- You can run any public container image with `kubectl` run to help solve problems, including the multitalented BusyBox tool, which contains all your favorite Unix commands.
+- Kubernetes is designed to be automated and controlled by code. When you need to go beyond what `kubectl` provides, the Kubernetes client-go library gives you complete control over every aspect of your cluster using Go code.
+
 
 
 
