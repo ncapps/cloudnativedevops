@@ -207,8 +207,109 @@ There are three pillars of the Run Less Software philosophy, all of which will h
 - You should use managed Kubernetes if you can. This is the best option for most businesses in terms of cost, overhead, and quality.
 - Don’t self-host your cluster without sound business reasons. If you do self-host, don’t underestimate the engineering time involved for the initial setup and ongoing maintenance overhead.
 
+### Ch 4. Working with Kubernetes Objects
+**Deployments**
+- A Deployment’s job is to watch its associated containers and make sure that the specified number of them is always running.
+```
+# Query all active Deployments
+k get depoyments
+
+# Get detailed information on a specific deployment
+k describe deployments/demo
+```
+
+**Pods**
+- A Pod is the Kubernetes object that represents a group of one or more containers
+- Sometimes a set of containers needs to be scheduled together, running on the same node, and communicating locally, perhaps sharing storage.
+- Deployments don’t manage Pods directly. That’s the job of the ReplicaSet object. Deployments manage ReplicaSets.
+
+**ReplicaSets**
+- A ReplicaSet is responsible for a group of identical Pods, or replicas. If there are too few (or too many) Pods, compared to the specification, the ReplicaSet controller will start (or stop) some Pods to rectify the situation.
+```
+# Check the pod
+k get pods --selector app=demo
+
+# Stop the pod
+k delete pods --selector app=demo
+
+# Clean up by tag
+k delete all --selector app=demo
+```
+
+**Deployment Manifests**
+```
+cd hello-k8s
+
+# Create a deployment
+k apply -f k8s/deployment.yaml
+
+# Check that the pod is running
+k get pods --selector app=demo
+```
+
+**Service Resources**
+- A Service resource gives you a single, unchanging IP address or DNS name that will be automatically routed to any matching Pod
+- Think of a Service as being like a web proxy or a load balancer, forwarding requests to a set of backend Pods
+- The *selector* is the part that tells the Service how to route requests to particular Pods.
+- Requests will be forwarded to any Pods matching the specified set of labels; in this case, just app: demo
+- A Deployment manages a set of Pods for your application, and a Service gives you a single entry point for requests to those Pods.
+```
+# Create a service
+k apply - f k8s/service.yaml
+
+# Forward port
+k port-forward service/demo 9999:8888
+
+# Clean up
+k delete -f k8s/
+```
+
+**Querying the Cluster with kubectl**
+- The `kubectl` tool is the Swiss Army knife of Kubernetes: it applies configuration, creates, modifies, and destroys resources
+```
+# See all resources by type
+k get all
+
+# Get detailed information on a specific resource
+# k describe <TYPE>/<NAME>
+```
+
+**Helm: A Kubernetes Package Manager**
+- You can use the helm command-line tool to install and configure applications (your own or anyone else’s)
+- You can create packages called Helm charts, which completely specify the resources needed to run the application, its dependencies, and its configurable settings.
+- A Helm chart is really just a convenient wrapper around Kubernetes YAML manifests.
+```
+# Creates depoyment and service objects
+helm install demo ./k8s/demo
+```
+
+**Important Helm terms**
+- *chart* is a Helm package, containing all the resource definitions necessary to run an application in Kubernetes.
+- *repository* is a place where charts can be collected and shared.
+- *release* is a particular instance of a chart running in a Kubernetes cluster.
+```
+# List Helm Releases
+helm list
+
+# See status for a particular release
+helm status <NAME>
+```
+
+[Public helm charts](https://github.com/helm/charts/tree/master/stable)
+
+
+**Summary**
+- The Pod is the fundamental unit of work in Kubernetes, specifying a single container or group of communicating containers that are scheduled together.
+- A Deployment is a high-level Kubernetes resource that declaratively manages Pods, deploying, scheduling, updating, and restarting them when necessary.
+- A Service is the Kubernetes equivalent of a load balancer or proxy, routing traffic to its matching Pods via a single, well-known, durable IP address or DNS name.
+- The Kubernetes scheduler watches for a Pod that isn’t yet running on any node, finds a suitable node for it, and instructs the kubelet on that node to run the Pod.
+- Resources like Deployments are represented by records in Kubernetes’s internal database. Externally, these resources can be represented by text files (known as manifests) in YAML format. The manifest is a declaration of the desired state of the resource.
+- `kubectl` is the main tool for interacting with Kubernetes, allowing you to apply manifests, query resources, make changes, delete resources, and do many other tasks.
+- Helm is a Kubernetes package manager. It simplifies configuring and deploying Kubernetes applications, allowing you to use a single set of values (such as the application name or listen port) and a set of templates to generate Kubernetes YAML files, instead of having to maintain the raw YAML files yourself.
+
+
 Implementation questions:
 - Managing the `etcd` database of the Kubernetes control plane. What happens on reboot, interruption, etc.
 - See "Self-hosted option" in Ch 3 of Cloud Native DevOps with Kubernetes
 - Why not use managed kubernetes (EKS, Fargate) for the manager on the ground?
--
+
