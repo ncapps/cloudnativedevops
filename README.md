@@ -566,6 +566,31 @@ k config current-context
 - You can run any public container image with `kubectl` run to help solve problems, including the multitalented BusyBox tool, which contains all your favorite Unix commands.
 - Kubernetes is designed to be automated and controlled by code. When you need to go beyond what `kubectl` provides, the Kubernetes client-go library gives you complete control over every aspect of your cluster using Go code.
 
+### Chapter 8. Running Containers
+- A Pod represents a collection of application containers and volumes running in the same execution environment. Pods, not containers, are the smallest deployable artifact in a Kubernetes cluster. This means all of the containers in a Pod always land on the same machine.
+- A container represents an isolated process (or group of processes) that exists in its own namespace.
+- Each container should run just one main process. If you’re running a large group of unrelated processes in a container, you’re not taking full advantage of the power of containers, and you should think about splitting your application up into multiple, communicating containers.
+- In general, the right question to ask yourself when designing Pods is, “Will these containers work correctly if they land on different machines?” If the answer is “no”, a Pod is the correct grouping for the containers. If the answer is “yes”, multiple Pods is the probably the correct solution.
+
+There are four parts to an image identifier: `docker.io/ncapps/demo:latest`
+1. registry hostname - docker.io
+2. repository namespace - ncapps
+3. image repository - demo
+4. tag - latest
+
+- You should avoid using the latest tag when deploying containers in production, because this makes it hard to track which version of the image is running and hard to roll back.
+- It’s important to always use a specific tag when deploying production containers to Kubernetes
+- The `imagePullPolicy` field on a container governs how often Kubernetes will do this. It can take one of three values: `Always`, `IfNotPresent`, or `Never`
+- Just like you wouldn’t (or shouldn’t) run anything as root on your server, you shouldn’t run anything as root in a container on your server. Running binaries that were created elsewhere requires a significant amount of trust, and the same is true for binaries in containers.
+- Run containers as non-root users, and block root containers from running, using the `runAsNonRoot: true` setting.
+- It’s good practice to always set readOnlyRootFilesystem unless the container really does need to write to files.
+- Set security contexts on all your Pods and containers. Disable privilege escalation and drop all capabilities. Add only the specific capabilities that a given container needs.
+- Other useful security settings on containers include readOnlyRootFilesystem: true and allowPrivilegeEscalation: false.
+- Rather than have to specify all the security settings for each individual container or Pod, you can specify them at the cluster level using a `PodSecurityPolicy` resource
+- Be careful writing to shared Volumes. Kubernetes doesn’t enforce any locking on disk writes. If two containers try to write to the same file at once, data corruption can result. To avoid this, either implement your own write-lock mechanism, or use a Volume type that supports locking, such as nfs or glusterfs.
+- Linux capabilities provide a fine-grained privilege control mechanism, but the default capabilities for containers are too generous. Start by dropping all capabilities for containers, then grant specific capabilities if a container needs them.
+- Containers in the same Pod can share data by reading and writing a mounted Volume. The simplest Volume is of type emptyDir, which starts out empty and preserves its contents only as long as the Pod is running.
+- A PersistentVolume, on the other hand, preserves its contents as long as needed. Pods can dynamically provision new PersistentVolumes using PersistentVolumeClaims.
 
 
 
