@@ -293,6 +293,9 @@ helm list
 
 # See status for a particular release
 helm status <NAME>
+
+# Clean up
+helm uninstall demo
 ```
 
 [Public helm charts](https://github.com/helm/charts/tree/master/stable)
