@@ -137,3 +137,38 @@ Depending on which version of the book you read you may see reference to using p
 - *Cloud native* is a useful shorthand for talking about cloud-based, containerized, distributed systems, made up of cooperating microservices, dynamically managed by automated infrastructure as code.
 
 ### 2. First Steps with Kubernetes
+**Docker basics**
+```bash
+cd hello/
+
+# Build docker image
+docker image build -t myhello .
+
+# Run docker container
+# docker container run -p HOST_PORT:CONTAINER_PORT ...
+docker container run -p 9999:8888 myhello
+
+# Authenticate with Docker Hub
+docker login
+
+# Name and publish image
+docker image tag myhello ncapps/myhello
+docker image push ncapps/myhello
+```
+
+**Introducing Kubernetes**
+```bash
+# Run the demo app
+k run demo --image=ncapps/myhello --port=9999 --labels app=demo
+
+# Forward port 9999 on your local machine to the container's port 8888
+k port-forward pod/demo 9999:8888
+
+# Get pods
+k get pods --selector app=demo
+```
+
+**Summary**
+- The `kubectl` tool is the primary way of interacting with a Kubernetes cluster.
+- It can be used either imperatively (to run a public container image, for example, and implicitly creating the necessary Kubernetes resources).
+- It can be used declaratively, to apply Kubernetes configuration in the form of YAML manifests.
