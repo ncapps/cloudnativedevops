@@ -592,6 +592,50 @@ There are four parts to an image identifier: `docker.io/ncapps/demo:latest`
 - Containers in the same Pod can share data by reading and writing a mounted Volume. The simplest Volume is of type emptyDir, which starts out empty and preserves its contents only as long as the Pod is running.
 - A PersistentVolume, on the other hand, preserves its contents as long as needed. Pods can dynamically provision new PersistentVolumes using PersistentVolumeClaims.
 
+### Chapter 9. Managing Pods
+- Labels exist to tag resources with information that’s meaningful to us, but they don’t mean anything to Kubernetes
+- A selector is an expression that matches a label (or set of labels). It’s a way of specifying a group of resources by their labels.
+```yaml
+# simple selector that matches any resource that has the app label with a value of demo
+apiVersion: v1
+kind: Service
+...
+spec:
+  ...
+  selector:
+    app: demo
+```
+```bash
+# quey the cluster using labels
+kubectl get pods --all-namespaces --selector app=demo
+
+# see labels for an object
+kubectl get pods --show-labels
+
+# combine different labels to make more specific selectors
+kubectl get pods -l app=demo,environment=production
+```
+- The long names of the hard and soft affinity types make the point that these rules apply during scheduling, but not during execution. That is, once the Pod has been scheduled to a particular node satisfying the affinity, it will stay there. If things change while the Pod is running, so that the rule is no longer satisfied, Kubernetes won’t move the Pod.
+- The term daemon traditionally refers to long-running background processes on a server that handle things like logging, so by analogy, Kubernetes DaemonSets run a daemon container on each node in the cluster.
+- For applications which need more complicated management than StatefulSets can provide, Kubernetes allows you to create your own new types of object. These are called *Custom Resource Definitions (CRDs)*
+- An *Ingress* can forward traffic to different services, depending on certain rules that you specify. One common use for this is to route requests to different places, depending on the request URL (known as a *fanout*):
+
+**Summary**
+- Labels are key-value pairs that identify resources, and can be used with selectors to match a specified group of resources.
+- Node affinities attract or repel Pods to or from nodes with specified attributes. For example, you can specify that a Pod can only run on a node in a specified availability zone
+- While hard node affinities can block a Pod from running, soft node affinities are more like suggestions to the scheduler. You can combine multiple soft affinities with different weights.
+- Pod affinities express a preference for Pods to be scheduled on the same node as other Pods. For example, Pods that benefit from running on the same node can express that using a Pod affinity for each other.
+- Pod anti-affinities repel other Pods instead of attracting. For example, an anti-affinity to replicas of the same Pod can help spread your replicas evenly across the cluster.
+- Taints are a way of tagging nodes with specific information; usually, about node problems or failures. By default, Pods won’t be scheduled on tainted nodes.
+- Tolerations allow a Pod to be scheduled on nodes with a specific taint. You can use this mechanism to run certain Pods only on dedicated nodes.
+- DaemonSets allow you to schedule one copy of a Pod on every node (for example, a logging agent).
+- StatefulSets start and stop Pod replicas in a specific numbered sequence, allowing you to address each by a predictable DNS name. This is ideal for clustered applications, such as databases.
+- Horizontal Pod Autoscalers watch a set of Pods, trying to optimize a given metric (such as CPU utilization). They increase or decrease the desired number of replicas to achieve the specified goal.
+- PodPresets can inject bits of common configuration into all selected Pods at creation time. For example, you could use a PodPreset to mount a particular Volume on all matching Pods.
+- Custom Resource Definitions (CRDs) allow you to create your own custom Kubernetes objects, to store any data you wish. Operators are Kubernetes client programs that can implement orchestration behavior for your specific application (for example, MySQL).
+- Ingress resources route requests to different services, depending on a set of rules, for example, matching parts of the request URL. They can also terminate TLS connections for your application.
+- Istio is a tool that provides advanced networking features for microservice applications and can be installed, like any Kubernetes application, using Helm.
+
 
 
 Implementation questions:
@@ -599,4 +643,5 @@ Implementation questions:
 - See "Self-hosted option" in Ch 3 of Cloud Native DevOps with Kubernetes
 - Why not use managed kubernetes (EKS, Fargate) for the manager on the ground?
 - How will we instruct kubernetes to clean up docker images?
+- Will we create a DaemonSet for a logging agent?
 
