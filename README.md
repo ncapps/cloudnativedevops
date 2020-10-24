@@ -636,6 +636,23 @@ kubectl get pods -l app=demo,environment=production
 - Ingress resources route requests to different services, depending on a set of rules, for example, matching parts of the request URL. They can also terminate TLS connections for your application.
 - Istio is a tool that provides advanced networking features for microservice applications and can be installed, like any Kubernetes application, using Helm.
 
+### Chapter 10. Configuration and Secrets
+**ConfigMaps**
+- Configuration values commonly include things like environment-specific settings, DNS addresses of third-party services, and authentication credentials.
+- The *ConfigMap* is the primary object for storing configuration data in Kubernetes. You can think of it as being a named set of key-value pairs that stores configuration data.
+```bash
+# Create a ConfigMap from a YAML file
+kubectl create configmap demo-config --namespace=demo --from-file=config.yaml
+
+# Export the manifest file for a ConfigMap
+kubectl get configmap/demo-config --namespace=demo -o yaml >demo-config.yaml
+```
+
+**Kubernetes secrets**
+- Kubernetes provides a special type of object intended to store secret data: the Secret.
+- Just like ConfigMaps, Secrets can be made visible to containers by putting them into environment variables, or mounting them as a file on the container’s filesystem.
+
+
 
 
 Implementation questions:
