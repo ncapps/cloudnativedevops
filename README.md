@@ -651,8 +651,20 @@ kubectl get configmap/demo-config --namespace=demo -o yaml >demo-config.yaml
 **Kubernetes secrets**
 - Kubernetes provides a special type of object intended to store secret data: the Secret.
 - Just like ConfigMaps, Secrets can be made visible to containers by putting them into environment variables, or mounting them as a file on the container’s filesystem.
+- Kubernetes Secrets are `Opaque`, which means they’re not shown in `kubectl describe` output, in log messages, or in the terminal.
 
+**Secret Management Strategies**
+- Encrypt secrets in version control **Recommended for small organizations
+- Store secrets remotely
+- Use a dedicated secrets management tool
 
+**Summary**
+- Separate your configuration data from application code and deploy it using Kubernetes ConfigMaps and Secrets. That way, you don’t need to redeploy your app every time you change a password.
+- You can get data into ConfigMaps by writing it directly in your Kubernetes manifest file, or use `kubectl` to convert an existing YAML file into a ConfigMap spec.
+- Once data is in a ConfigMap, you can insert it into a container’s environment, or into the command-line arguments of its entrypoint. Alternatively, you can write the data to a file that is mounted on the container.
+- Secrets work just like ConfigMaps, except that the data is encrypted at rest, and obfuscated in kubectl output.
+- A simple, flexible way to manage secrets is to store them directly in your source code repo, but encrypt them using Sops or another text-based encryption tool.
+- Don’t overthink secrets management, especially at first. Start with something simple that’s easy to set up for developers.
 
 
 Implementation questions:
@@ -661,4 +673,8 @@ Implementation questions:
 - Why not use managed kubernetes (EKS, Fargate) for the manager on the ground?
 - How will we instruct kubernetes to clean up docker images?
 - Will we create a DaemonSet for a logging agent?
+- Configuring RBAC for the kubenetes cluster on the platform
+- How do we separate configurationt data from the application? So we don't to redeploy the app if a password or certificate change.
+-
+
 
