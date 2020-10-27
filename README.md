@@ -703,3 +703,51 @@ k get pods --all-namespaces
 k top nodes
 k top pods -n kube-system
 ```
+
+**Summary**
+- Role-Based Access Control (RBAC) gives you fine-grained management of permissions in Kubernetes. Make sure it’s enabled, and use RBAC roles to grant specific users and apps only the minimum privileges they need to do their jobs.
+- Containers aren’t magically exempt from security and malware problems. Use a scanning tool to check any containers you run in production.
+- Kubernetes is great and all, but you still need backups. Use Velero to back up your data and the state of the cluster. It’s handy for moving things between clusters, too.
+- kubectl is a powerful tool for inspecting and reporting on all aspects of your cluster and its workloads. Get friendly with kubectl. You’ll be spending a lot of time together.
+
+## Chapter 12. Deploying Kubernetes Applications
+- One of the most valuable features of Helm is the ability to specify, change, update, and override configuration settings.
+- Every Helm chart has a standard structure. First, the chart is contained in a directory with the same name as the chart (demo in this case):
+```
+demo
+├── Chart.yaml
+├── production-values.yaml
+├── staging-values.yaml
+├── templates
+│   ├── deployment.yaml
+│   └── service.yaml
+└── values.yaml
+```
+- The *values.yaml* file is completely free-form YAML, with no predefined schema: it’s up to you to choose what variables are defined, their names, and their values.
+- The curly braces indicate a place where Helm should substitute the value of a variable, but they’re actually part of Go template syntax.
+- To customize the settings for a Helm chart, create a YAML file that overrides the default, like the staging-values.yaml file in the example, and apply it on the command line using the --values flag.
+```
+# specify an extra values file
+helm install --name demo-staging --values=./k8s/demo/staging-values.yaml
+
+# updates an existing deployment
+helm upgrade demo-staging --values=./k8s/demo/staging-values.yaml ./k8s/demo
+
+# rollback to a previous version
+helm rollback demo-staging 1
+```
+- Consider automatic rollback with `helm-monitor`
+- You don’t need your own chart repo to use Helm, as it’s common to store an application’s Helm chart in the application’s own repo.
+- Manage multiple charts with *Helmfile*
+- The *helmfile.yaml* specifies everything that should be running in the cluster (or at least, a subset of it) in a declarative way, just like Kubernetes manifests. When you apply this declarative manifest, Helmfile will bring the cluster into line with your specification.
+
+**Summary**
+While you can deploy applications to Kubernetes using just raw YAML manifests, it’s inconvenient. Helm is a powerful tool that can help with this, provided you understand how to get the best out of it.
+
+- While you can deploy applications to Kubernetes using just raw YAML manifests, it’s inconvenient. Helm is a powerful tool that can help with this, provided you understand how to get the best out of it.
+- Installing a chart creates a Helm release. Each time you install an instance of a chart, a new release is created. When you update a release with different config values, Helm increments the release revision number.
+- To customize a Helm chart for your own requirements, create a custom values file overriding just the settings you care about, and add it to the helm install or helm upgrade command line.
+- You can use a variable (environment, for example) to select different sets of values or secrets depending on the deployment environment: staging, production, and so on.
+- With Helmfile, you can declaratively specify a set of Helm charts and values to be applied to your cluster, and install or update all of them with a single command.
+- A quick way to test and validate manifests is to use kubeval, which will check for valid syntax and  common errors in manifests.
+
