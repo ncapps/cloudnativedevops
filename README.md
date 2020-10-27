@@ -666,7 +666,7 @@ kubectl get configmap/demo-config --namespace=demo -o yaml >demo-config.yaml
 - A simple, flexible way to manage secrets is to store them directly in your source code repo, but encrypt them using Sops or another text-based encryption tool.
 - Don’t overthink secrets management, especially at first. Start with something simple that’s easy to set up for developers.
 
-## Chapter 11. Security and Backups
+### Chapter 11. Security and Backups
 ```bash
 # RBAC enabled if RBAC is in --authorization-mode
 kubectl describe pod -n kube-system -l component=kube-apiserver
@@ -710,7 +710,7 @@ k top pods -n kube-system
 - Kubernetes is great and all, but you still need backups. Use Velero to back up your data and the state of the cluster. It’s handy for moving things between clusters, too.
 - kubectl is a powerful tool for inspecting and reporting on all aspects of your cluster and its workloads. Get friendly with kubectl. You’ll be spending a lot of time together.
 
-## Chapter 12. Deploying Kubernetes Applications
+### Chapter 12. Deploying Kubernetes Applications
 - One of the most valuable features of Helm is the ability to specify, change, update, and override configuration settings.
 - Every Helm chart has a standard structure. First, the chart is contained in a directory with the same name as the chart (demo in this case):
 ```
@@ -750,4 +750,16 @@ While you can deploy applications to Kubernetes using just raw YAML manifests, i
 - You can use a variable (environment, for example) to select different sets of values or secrets depending on the deployment environment: staging, production, and so on.
 - With Helmfile, you can declaratively specify a set of Helm charts and values to be applied to your cluster, and install or update all of them with a single command.
 - A quick way to test and validate manifests is to use kubeval, which will check for valid syntax and  common errors in manifests.
+
+### Chapter 13, Development Workflow
+**Development Tools**
+- *Skaffold* is an open source tool from Google designed to provide a fast local development workflow. It automatically rebuilds your containers as you develop locally, and deploys those changes to either a local or remote cluster.
+- *Draft* is an open source tool maintained by the Azure team at Microsoft. Like Skaffold, it can use Helm to automatically deploy updates to a cluster when code changes.
+
+**Deployment Strategies**
+- In Kubernetes, an application’s deployment strategy is defined in the Deployment manifest. The default is RollingUpdate, so if you don’t specify a strategy, this is what you’ll get
+
+**Handling Migrations with Helm**
+- On Kubernetes, you can use a Job resource to do this (see “Jobs”). You could script this using `kubectl` commands as part of your upgrade process, or if you are using Helm, then you can use a built-in feature called *hooks*.
+- Helm hooks allow you to control the order in which things happen during a deployment. They also let you bail out of an upgrade if things go wrong.
 
