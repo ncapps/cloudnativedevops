@@ -665,3 +665,41 @@ kubectl get configmap/demo-config --namespace=demo -o yaml >demo-config.yaml
 - Secrets work just like ConfigMaps, except that the data is encrypted at rest, and obfuscated in kubectl output.
 - A simple, flexible way to manage secrets is to store them directly in your source code repo, but encrypt them using Sops or another text-based encryption tool.
 - Don’t overthink secrets management, especially at first. Start with something simple that’s easy to set up for developers.
+
+## Chapter 11. Security and Backups
+```bash
+# RBAC enabled if RBAC is in --authorization-mode
+kubectl describe pod -n kube-system -l component=kube-apiserver
+
+# See permissions for a given role
+k describe clusterrole/edit
+```
+- You can define roles on the namespace level (using the Role object) or across the whole cluster (using the ClusterRole object).
+- You associate a user with a role using a *role binding*. You can create a RoleBinding object that applies to a specific namespace, or a ClusterRoleBinding that applies at the cluster level.
+- In Kubernetes, permissions are *additive*; users start with no permissions, and you can add them using Roles and RoleBindings. You can’t subtract permissions from someone who already has them.
+- Never give the `cluster-admine` role to users who are not cluster operators, and especially not to service accounts for apps which might be exposed to the internet, such as the Kubernetes Dashboard
+- Apps running in Kubernetes usually don’t need any RBAC permissions. Unless you specify otherwise, all Pods will run as the default service account in their namespace, which has no roles associated with it.
+- Make sure RBAC is enabled in all your clusters. Give cluster-admin rights only to users who actually need the power to destroy everything in the cluster. If your app needs access to cluster resources, create a service account for it and bind it to a role with only the permissions it needs, in only the namespaces where it needs them.
+- Don’t run containers from untrusted sources or when you’re not sure what’s in them. Run a scanning tool like Clair or MicroScanner over all containers, even those you build yourself, to make sure there are no known vulnerabilities in any of the base images or dependencies.
+- *Replication is not backup*. While replication may protect you from the failure of the underlying storage volume, it won’t protect you from accidentally deleting the volume by mis-clicking in a web console, for example.
+- Use a managed or turnkey service provider to run your master nodes with etcd clustering and backups. If you run them yourself, be very sure you know what you’re doing. Resilient etcd management is a specialist job, and the consequences of getting it wrong can be serious.
+- Recommend that you always manage your Kubernetes resources declaratively, by applying YAML manifests or Helm charts stored in version control.
+
+**Monitoring Cluster Status**
+```bash
+# Get health information for the control plane components
+k get componentstatuses
+
+# List all the nodes in your cluster
+k get nodes
+
+# Get detailed node information
+k describe nodes/<NAME>
+
+# See all pods in the entire cluser
+k get pods --all-namespaces
+
+# get CPU and memory utilization
+k top nodes
+k top pods -n kube-system
+```
