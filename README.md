@@ -763,3 +763,6 @@ While you can deploy applications to Kubernetes using just raw YAML manifests, i
 - On Kubernetes, you can use a Job resource to do this (see “Jobs”). You could script this using `kubectl` commands as part of your upgrade process, or if you are using Helm, then you can use a built-in feature called *hooks*.
 - Helm hooks allow you to control the order in which things happen during a deployment. They also let you bail out of an upgrade if things go wrong.
 
+### Chapter 14. Continuous Deployment in Kubernetes
+- Defining the build pipeline steps with code allows you to track and modify these steps alongside application code.
+- Containers enable developers to promote build artifacts up through environments, such as testing, staging, and eventually production, ideally without having to rebuild a new container.
